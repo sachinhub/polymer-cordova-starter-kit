@@ -1,5 +1,5 @@
 ![](https://cloud.githubusercontent.com/assets/110953/7877439/6a69d03e-0590-11e5-9fac-c614246606de.png)
-## Polymer Starter Kit
+## Polymer Cordova Starter Kit
 
 > A starting point for building web applications with Polymer 1.0
 
@@ -247,6 +247,157 @@ If for any reason you need to disable Service Worker support after previously en
 2. Remove the two Platinum Service Worker elements (platinum-sw/..) in [app/elements/elements.html](https://github.com/PolymerElements/polymer-starter-kit/blob/master/app/elements/elements.html)
 3. Remove 'precache' from the list in the 'default' gulp task ([gulpfile.js](https://github.com/PolymerElements/polymer-starter-kit/blob/master/gulpfile.js))
 4. Navigate to `chrome://serviceworker-internals` and unregister any Service Workers registered by Polymer Starter Kit for your app just in case there's a copy of it cached.
+
+## Cordova tasks
+
+### gulp --cordova 'run any command'
+A local wrapper for cordova cli (allows to use different cordova CLI versions in different projects). For instance instead of running `cordova plugins ls` you'd write the following to list all the installed plugins:
+```sh
+gulp --cordova 'plugin ls'
+```
+Head over to the [cordova cli documentation](http://cordova.apache.org/docs/en/edge/guide_cli_index.md.html#The%20Command-Line%20Interface) or their [github page](https://github.com/apache/cordova-cli/) to learn how to use the cordova cli. Remember that when using Generator-M-Ionic you don't need to install cordova globally!
+
+### gulp --cordova 'build-related task'
+
+If you run one of the following cordova commands: `build <platform>`, `run <platform>`, `emulate <platform>`, 'serve' or `prepare <platform>`, `gulp build` will build your app into the www folder, before cordova will take it from there. For instance if you want to test your app on your connected ios device, run:
+```sh
+gulp --cordova 'run ios' # runs gulp build, then cordova run ios
+```
+Sometimes you don't want `gulp build` to run every time before the cordova command is run. In that case simply add the `--no-build` option and `gulp build` will be skipped.
+
+
+### gulp watch-build
+Builds into www, watches version in www and opens your browser. Good for debugging and testing your build!
+```sh
+gulp watch-build
+```
+Add the `--no-build` option and `gulp build` will be skipped.
+The `--no-open` options is available here as well, in case you don't want your browser to open automatically and would rather navigate to `http://localhost:9000` yourself.
+
+
+### gulp build
+Builds your angular app and moves it to the www folder. Usually you don't run this command directly, but it will be implicitly run by `gulp watch-build` and any build-related cordova tasks (as explained above).
+```sh
+gulp build
+```
+Note that the build will not complete if you have any **ESLint or jsonlint errors** in your code! Sometimes it's necessary to let the build run anyway. Use the `--force-build` option to do so. The `--minify` option will minify javascript, css, html and images. These options will also work for all the build-related cordova tasks!
+
+### gulp environment
+Injects environment (dev, prod and any other you'd like) variables into your `Config` constants.
+
+#### How does it work?
+Your `main` module per default contains the two files `env-dev.json` and `env-prod.json` located under `app/main/constants/`. Any key value pair you define in those files will be copied into the `Config.ENV` constant located in `app/main/constants/config-const.js`, depending on which environment you chosse. So when you're working on dev, all key value pairs from the `main` module's `env-dev.json` will be copied to your `config-const.js`. Same goes for the prod environment respectively. Then simply inject the `Config` constant in any service or controller where you need to use it.
+
+#### Choosing an environment
+When you run `gulp watch` or any other task that runs `gulp build` without specifying an environment it will default to the dev environment:
+```shell
+gulp watch                # defaults to --env=dev
+gulp build                # so does this
+gulp --cordova 'run ios'  # and any other command that uses gulp build
+```
+In order to choose an environment explicitly add the `--env` flag, like this:
+```shell
+gulp watch --env=prod
+gulp build --env=prod
+gulp --cordova 'run ios' --env=prod
+```
+While you're running `gulp watch` you can even **temporarily** switch the environment you're currently working on without having to restart your watch task. Simply type:
+```shell
+gulp environment --env=<env>
+```
+Gulp will livereload with your new environment! It's **important** to note that as soon as you are making more changes and a livereload is triggered, your environment switches back to the one that was supplied when `gulp watch` was started. If you want to **permanently** switch your environment you should do so by restarting your `gulp watch` tasks with the desired environment.
+
+#### Creating a new environment
+If you find yourself faced needing more than a dev and a prod environment simply create a new file: `app/main/constants/dev-env5.json`, fill it with the desired values and then run one the following:
+```shell
+gulp watch --env=env5
+gulp build --env=env5
+gulp environment --env=env5
+```
+
+#### Environments when using several modules
+In case your project grows large and you have several modules in your project you will probably find yourself wanting to share environments across all modules. No problem. Every module you create has it's own `Config` constant located in `app/module/constants/config-const.js`. But only your `main` module contains the environment files. The gulp tasks will automatically copy the environments to all of your modules' `Config.ENV` constants.
+
+
+### gulp build-vars
+Inject variables into your angular app -namely your `Config` constants which are defined in `app/*/constants/config-const.js`- during a build.
+
+Adding the `--buildVars` flag to `gulp build` or any gulp task that runs `gulp build` implicitly, for instance:
+```sh
+gulp watch --buildVars='key:value,keys2:value2'
+```
+will result in `Config` constants that look like this:
+```js
+'use strict';
+angular.module('main')
+.constant('Config', {
+
+  ENV: {
+    /*inject-env*/
+    // ..
+    /*endinject*/
+  },
+
+  BUILD: {
+    /*inject-build*/
+    'key': 'value',
+    'keys2': 'value2'
+    /*endinject*/
+}
+
+});
+```
+
+### gulp defaults
+Define default flags for each gulp task.
+
+You may have noticed that the Generator-M-Ionic supplies an extended amount of gulp tasks and flags to modify the behaviour of these tasks. Depending on your project specifics you may find yourself always typing the same flags for the same tasks over and over again. With the `gulp defaults` task you can spare yourself some typing. Here's how it works:
+
+For instance we use `gulp watch --no-open` a lot.
+
+#### setting a default
+Running the following command will create a new `gulp/.gulp_settings.json` file and save your default flags in it. **Note**: the `.gulp_settings.json` file will be ignored by git, so these settings are only applied locally to your machine. If you want these settings to be part of the repository and share it with your team, simply remove the according line from the `.gitignore` and add `.gulp_setting.json` to your commit.
+
+```sh
+gulp defaults --set='watch --no-open'
+```
+
+What if you still want use a different set of flags from time to time? No worries, we though of that too!
+You can add any amount of **additional command line flags**, they will be merged with your defaults. In the next example `gulp watch` will run with both the `--env-prod` from the command line *and* the `--no-open` flag from your defaults.
+
+```sh
+gulp watch --env=prod ## the --no-open flag will be merged
+```
+
+You can also **overwrite** your task's defaults by explicitly setting the flag to a different value. The value that is explicitly set, will always win:
+
+```sh
+gulp watch --open # will run with --open despite defaults
+```
+
+#### clearing a default
+If on of the defaults is no longer required, running the following command will get rid of it:
+
+```sh
+gulp defaults --clear=watch
+```
+
+#### printing all defaults
+By running `gulp defaults` without a 'set' or 'clear' flag, a comprehensive list of all the defaults that are defined in the `.gulp_settings.json` is shown.
+
+```sh
+gulp defaults
+```
+
+## Running on Windows
+The generator should work just like on unix/mac except there's one difference, when running `gulp --cordova` tasks. They need doublequotes. So write this:
+```sh
+gulp --cordova "run android" # will work on windows
+```
+instead of this:
+```sh
+gulp --cordova 'run android' # won't work on windows
+```
 
 ## Yeoman support
 
