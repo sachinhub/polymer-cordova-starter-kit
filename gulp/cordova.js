@@ -8,12 +8,14 @@ var $ = require('gulp-load-plugins')();
 var path = require('path');
 var del = require('del');
 var vinylPaths = require('vinyl-paths');
+var runSequence = require('run-sequence');
 
 var runCordova = function (command, stream) {
   // allow to overwrite command from option.cordova with parameter
   command = typeof command === 'string' ? command : options.cordova;
   // create new stream if not provided
   stream = stream || gulp.src('');
+
   return stream
     .pipe($.shell([
       // needs explicit cross-platform path
