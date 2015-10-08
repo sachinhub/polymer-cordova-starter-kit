@@ -23,6 +23,9 @@ var glob = require('glob');
 var historyApiFallback = require('connect-history-api-fallback');
 var packageJson = require('./package.json');
 var crypto = require('crypto');
+var minimist = require('minimist');
+var requireDir = require('require-dir');
+var chalk = require('chalk');
 
 var AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -36,6 +39,12 @@ var AUTOPREFIXER_BROWSERS = [
   'bb >= 10'
 ];
 
+// config
+gulp.paths = {
+  dist: 'www'
+};
+
+
 var styleTask = function (stylesPath, srcs) {
   return gulp.src(srcs.map(function(src) {
       return path.join('app', stylesPath, src);
@@ -44,7 +53,7 @@ var styleTask = function (stylesPath, srcs) {
     .pipe($.autoprefixer(AUTOPREFIXER_BROWSERS))
     .pipe(gulp.dest('.tmp/' + stylesPath))
     .pipe($.cssmin())
-    .pipe(gulp.dest('dist/' + stylesPath))
+    .pipe(gulp.dest(gulp.paths.dist + '/' + stylesPath))
     .pipe($.size({title: stylesPath}));
 };
 
@@ -67,7 +76,7 @@ var imageOptimizeTask = function (src, dest) {
 };
 
 var optimizeHtmlTask = function (src, dest) {
-  var assets = $.useref.assets({searchPath: ['.tmp', 'app', 'dist']});
+  var assets = $.useref.assets({searchPath: ['.tmp', 'app', gulp.paths.dist]});
 
   return gulp.src(src)
     // Replace path for vulcanized assets
@@ -116,7 +125,7 @@ gulp.task('jshint', function () {
 
 // Optimize images
 gulp.task('images', function () {
-  return imageOptimizeTask('app/images/**/*', 'dist/images');
+  return imageOptimizeTask('app/images/**/*', gulp.paths.dist + '/images');
 });
 
 // Copy all files at the root level (app)
@@ -127,26 +136,26 @@ gulp.task('copy', function () {
     '!app/cache-config.json'
   ], {
     dot: true
-  }).pipe(gulp.dest('dist'));
+  }).pipe(gulp.dest(gulp.paths.dist));
 
   var bower = gulp.src([
     'bower_components/**/*'
-  ]).pipe(gulp.dest('dist/bower_components'));
+  ]).pipe(gulp.dest(gulp.paths.dist + '/bower_components'));
 
   var elements = gulp.src(['app/elements/**/*.html',
                            'app/elements/**/*.css',
                            'app/elements/**/*.js'])
-    .pipe(gulp.dest('dist/elements'));
+    .pipe(gulp.dest(gulp.paths.dist + '/elements'));
 
   var swBootstrap = gulp.src(['bower_components/platinum-sw/bootstrap/*.js'])
-    .pipe(gulp.dest('dist/elements/bootstrap'));
+    .pipe(gulp.dest(gulp.paths.dist + '/elements/bootstrap'));
 
   var swToolbox = gulp.src(['bower_components/sw-toolbox/*.js'])
-    .pipe(gulp.dest('dist/sw-toolbox'));
+    .pipe(gulp.dest(gulp.paths.dist + '/sw-toolbox'));
 
   var vulcanized = gulp.src(['app/elements/elements.html'])
     .pipe($.rename('elements.vulcanized.html'))
-    .pipe(gulp.dest('dist/elements'));
+    .pipe(gulp.dest(gulp.paths.dist + '/elements'));
 
   return merge(app, bower, elements, vulcanized, swBootstrap, swToolbox)
     .pipe($.size({title: 'copy'}));
@@ -155,7 +164,7 @@ gulp.task('copy', function () {
 // Copy web fonts to dist
 gulp.task('fonts', function () {
   return gulp.src(['app/fonts/**'])
-    .pipe(gulp.dest('dist/fonts'))
+    .pipe(gulp.dest(gulp.paths.dist + '/fonts'))
     .pipe($.size({title: 'fonts'}));
 });
 
@@ -163,13 +172,13 @@ gulp.task('fonts', function () {
 gulp.task('html', function () {
   return optimizeHtmlTask(
     ['app/**/*.html', '!app/{elements,test}/**/*.html'],
-    'dist');
+    gulp.paths.dist);
 });
 
 // Vulcanize granular configuration
 gulp.task('vulcanize', function () {
-  var DEST_DIR = 'dist/elements';
-  return gulp.src('dist/elements/elements.vulcanized.html')
+  var DEST_DIR = gulp.paths.dist + '/elements';
+  return gulp.src(gulp.paths.dist + '/elements/elements.vulcanized.html')
     .pipe($.vulcanize({
       stripComments: true,
       inlineCss: true,
@@ -187,7 +196,7 @@ gulp.task('vulcanize', function () {
 // See https://github.com/PolymerElements/polymer-starter-kit#enable-service-worker-support
 // for more context.
 gulp.task('cache-config', function (callback) {
-  var dir = 'dist';
+  var dir = gulp.paths.dist;
   var config = {
     cacheId: packageJson.name || path.basename(__dirname),
     disabled: false
@@ -212,7 +221,7 @@ gulp.task('cache-config', function (callback) {
 
 // Clean output directory
 gulp.task('clean', function (cb) {
-  del(['.tmp', 'dist'], cb);
+  del(['.tmp', gulp.paths.dist], cb);
 });
 
 // Watch files for changes & reload
@@ -267,13 +276,12 @@ gulp.task('serve:dist', ['default'], function () {
     // Note: this uses an unsigned certificate which on first access
     //       will present a certificate warning in the browser.
     // https: true,
-    server: 'dist',
+    server: gulp.paths.dist,
     middleware: [ historyApiFallback() ]
   });
 });
 
-// Build production files, the default task
-gulp.task('default', ['clean'], function (cb) {
+gulp.task('build', function (cb) {
   // Uncomment 'cache-config' if you are going to use service workers.
   runSequence(
     ['copy', 'styles'],
@@ -283,6 +291,81 @@ gulp.task('default', ['clean'], function (cb) {
     cb);
 });
 
+
+/* Cordova setting and tasks */
+// OPTIONS
+var options = gulp.options = minimist(process.argv.slice(2));
+
+// set defaults
+var task = options._[0]; // only for first task
+var gulpSettings;
+if (fs.existsSync('./gulp/.gulp_settings.json')) {
+  gulpSettings = require('./gulp/.gulp_settings.json');
+  var defaults = gulpSettings.defaults;
+  if (defaults) {
+    // defaults present for said task?
+    if (task && task.length && defaults[task]) {
+      var taskDefaults = defaults[task];
+      // copy defaults to options object
+      for (var key in taskDefaults) {
+        // only if they haven't been explicitly set
+        if (options[key] === undefined) {
+          options[key] = taskDefaults[key];
+        }
+      }
+    }
+  }
+}
+
+// environment
+options.env = options.env || 'dev';
+// print options
+if (defaults && defaults[task]) {
+  console.log(chalk.green('defaults for task \'' + task + '\': '), defaults[task]);
+}
+// cordova command one of cordova's build commands?
+if (options.cordova) {
+  var cmds = ['build', 'run', 'emulate', 'prepare', 'serve'];
+  for (var i = 0, cmd; ((cmd = cmds[i])); i++) {
+    if (options.cordova.indexOf(cmd) >= 0) {
+      options.cordovaBuild = true;
+      break;
+    }
+  }
+}
+
+// load tasks
+requireDir('./gulp');
+
+// default task
+//gulp.task('default', function () {
+//});
+
+/* End Cordova setting and tasks */
+
+// Build production files, the default task
+gulp.task('default', ['clean'], function (cb) {
+  // cordova build command & gulp build
+  if (options.cordovaBuild && options.build !== false) {
+    console.log('cordova-with-build');
+    return gulp.start('cordova-with-build');
+  }
+  // cordova build command & no gulp build
+  else if (options.cordovaBuild && options.build === false) {
+    console.log('cordova-only-resources');
+    return gulp.start('cordova-only-resources');
+  }
+  // cordova non-build command
+  else if (options.cordova) {
+    console.log('cordova');
+    return gulp.start('cordova');
+  }
+  // just default task when cordova option not present
+  else {
+    console.log('default');
+    return gulp.start('build', cb);
+  }
+});
 // Load tasks for web-component-tester
 // Adds tasks for `gulp test:local` and `gulp test:remote`
 require('web-component-tester').gulp.init(gulp);
