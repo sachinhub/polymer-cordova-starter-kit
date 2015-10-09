@@ -281,7 +281,7 @@ gulp.task('serve:dist', ['default'], function () {
   });
 });
 
-gulp.task('build', function (cb) {
+gulp.task('build', ['clean'], function (cb) {
   // Uncomment 'cache-config' if you are going to use service workers.
   runSequence(
     ['copy', 'styles'],
@@ -344,25 +344,21 @@ requireDir('./gulp');
 /* End Cordova setting and tasks */
 
 // Build production files, the default task
-gulp.task('default', ['clean'], function (cb) {
+gulp.task('default', function (cb) {
   // cordova build command & gulp build
   if (options.cordovaBuild && options.build !== false) {
-    console.log('cordova-with-build');
     return gulp.start('cordova-with-build');
   }
   // cordova build command & no gulp build
   else if (options.cordovaBuild && options.build === false) {
-    console.log('cordova-only-resources');
     return gulp.start('cordova-only-resources');
   }
   // cordova non-build command
   else if (options.cordova) {
-    console.log('cordova');
     return gulp.start('cordova');
   }
   // just default task when cordova option not present
   else {
-    console.log('default');
     return gulp.start('build', cb);
   }
 });
