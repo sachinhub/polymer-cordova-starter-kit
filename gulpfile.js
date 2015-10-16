@@ -258,7 +258,7 @@ gulp.task('serve', ['styles', 'elements', 'images'], function () {
 });
 
 // Build and serve the output from the dist build
-gulp.task('serve:dist', ['default'], function () {
+gulp.task('serve:dist', ['build'], function () {
   browserSync({
     port: 5001,
     notify: false,
