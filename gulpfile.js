@@ -298,10 +298,8 @@ gulp.task('serve:dist', ['build'], function() {
 });
 
 // Clean bower components once finished with them directory
-gulp.task('optimize', function(cb) {
-  del([dist('/bower_components'),
-      dist('/elements/elements.html')],
-    cb);
+gulp.task('optimize', function() {
+  del([dist('/bower_components'), dist('/elements/elements.html')]);
 });
 
 gulp.task('build', ['clean'], function(cb) {
