@@ -8,13 +8,22 @@
     "paper-elements": "PolymerElements/paper-elements#^1.0.1",
     "platinum-elements": "PolymerElements/platinum-elements#^1.1.0",
     "polymer": "Polymer/polymer#^1.2.0",
-    "paper-menu": "PolymerElements/paper-menu#4fecb43601"
+    "paper-menu": "PolymerElements/paper-menu#4fecb43601",
+    "paper-datatable": "^0.9.8"
   },
   "devDependencies": {
     "web-component-tester": "*"
   },
   "ignore": [],
   "resolutions": {
-    "paper-menu": "4fecb43601"
+    "paper-menu": "^1.0.0",
+    "polymer": "^1.6.0",
+    "paper-styles": "^1.1.4",
+    "lodash": "^4.17.4",
+    "iron-form": "^1.1.4",
+    "paper-item": "^1.0.0",
+    "paper-checkbox": "^1.0.0",
+    "paper-input": "^1.0.0",
+    "iron-icons": "^1.0.0"
   }
 }

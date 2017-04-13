@@ -1,0 +1,33 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ElasticRun Distribution Platform</title>
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="bower_components/lodash/dist/lodash.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+
+    <link rel="import" href="elements/er/er-login.html">
+
+    <link rel="import" href="styles/app-theme.html">
+    <style is="custom-style" include="shared-styles"></style>
+
+</head>
+
+<body unresolved>
+    <template is="dom-bind" id="mainbody">
+            <er-login loggedin={{loggedin}}></er-login>
+    </template>
+    <script>
+      var t = document.querySelector('#mainbody');
+
+      // The dom-change event signifies when the template has stamped its DOM.
+      t.addEventListener('dom-change', function () {
+        // auto-binding template is ready.
+        console.log('dom-change for main body');
+        t.loggedin = sessionStorage.auth_token ? true : false;
+      });
+    </script>
+</body>

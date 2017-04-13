@@ -52,6 +52,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <!-- will be replaced with elements/elements.vulcanized.html -->
   <link rel="import" href="elements/elements.html">
+  <link rel="import" href="elements/routing.html">
   <!-- endreplace-->
 
   <!-- For shared styles, shared-styles.html import in elements.html -->
@@ -59,7 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 </head>
 
-<body unresolved class="fullbleed layout vertical">
+<body unresolved class="fullbleed layout vertical" id="mainbody">
   <span id="browser-sync-binding"></span>
   <template is="dom-bind" id="app">
 
@@ -87,6 +88,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a data-route="contact" href="contact">
             <iron-icon icon="mail"></iron-icon>
             <span>Contact</span>
+          </a>
+
+          <a data-route="orders" href="orders">
+            <iron-icon icon="mail"></iron-icon>
+            <span>Orders</span>
           </a>
         </paper-menu>
       </paper-scroll-header-panel>
@@ -178,6 +184,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-material>
             </section>
 
+            <section data-route="orders">
+              <er-orders></er-orders>
+            </section>
           </iron-pages>
         </div>
       </paper-scroll-header-panel>

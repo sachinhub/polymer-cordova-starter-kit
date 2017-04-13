@@ -1,0 +1,166 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-form/iron-form.html" />
+<link rel="import" href="../../bower_components/paper-input/paper-input.html" />
+<link rel="import" href="../../bower_components/paper-button/paper-button.html" />
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html" />
+
+<dom-module is="er-login">
+  <template>
+    <style>
+    :host {
+                    color: white;
+                    font-size: 14px;
+                    --paper-input-container-input-color: #fff;
+                }
+
+                form {
+                    margin: 0px;
+                }
+
+                .left-container {
+                    width: 50%;
+                    position: absolute;
+                    box-sizing: border-box;
+                    background-color: cornflowerblue;
+                    /* For browsers that do not support gradients */
+
+                    background: -webkit-linear-gradient(#0B88C0, #90CEF8);
+                    /* For Safari 5.1 to 6.0 */
+
+                    background: -o-linear-gradient(#0B88C0, #90CEF8);
+                    /* For Opera 11.1 to 12.0 */
+
+                    background: -moz-linear-gradient(#0B88C0, #90CEF8);
+                    /* For Firefox 3.6 to 15 */
+
+                    background: linear-gradient(#0B88C0, #90CEF8);
+                    left: 0;
+                    height: 100%;
+                    padding: 30px 0px;
+                    background-size: cover;
+                }
+
+                .right-container {
+                    width: 50%;
+                    position: absolute;
+                    box-sizing: border-box;
+                    background-color: #203345;
+                    right: 0;
+                    height: 100%;
+                }
+
+                .left-container > * {
+                    margin: 8px 0px;
+                }
+
+                .right-container > * {
+                    margin: 8px 0px;
+                }
+
+                paper-button.sign-in {
+                    background-color: cornflowerblue;
+                }
+
+                paper-button.fb {
+                    background-color: royalblue;
+                }
+
+                paper-button.google {
+                    background-color: #E75B47;
+                }
+
+                paper-button,
+                ev-input {
+                    width: 300px;
+                }
+
+                .header {
+                    font-size: 18px;
+                    letter-spacing: 2px;
+                }
+
+                .underline {
+                    border-bottom: 1px dashed #fff;
+                    font-size: 12px;
+                }
+                .login-container{
+                    display: flex;
+                    flex-direction:row;
+                }
+                @media only screen and (max-width: 768px) and (min-width: 320px) {
+                    .login-container{
+                        flex-direction: column;
+                    }
+                    .left-container{
+                        top: 0;
+                        width: 100%;
+                        height: 100px;
+                        padding: 16px 0px;
+                    }
+                    .right-container{
+                        top:100px;
+                        width:100%;
+                    }
+                }
+    </style>
+    <form is="iron-form" id="login-form">
+      <div class="login-container">
+          <div class="left-container layout vertical center justified">
+              <div class="header">ElasticRun Distribution Platform</div>
+              <div class="footer">Powered by Elastic Framework</div>
+          </div>
+          <div class="right-container layout vertical center center-justified">
+              <iron-ajax id="loginValidate" url="http://localhost:3000/DistributionServices/api/Users/login" method="post" content-type="application/json" on-response="handleResponse" on-error="handleError" with-credentials=true></iron-ajax>
+
+              <paper-input label="Username" value="{{username}}" auto-validate required pattern="[[usernamePattern]]" error-message="Invalid user name"></paper-input>
+              <paper-input label="Password" type="password" value="{{password}}" auto-validate required pattern="[[passwordPattern]]" error-message="Invalid password"></paper-input>
+              <div class="custom-text underline">Forgot Password?</div>
+              <paper-toast id="paper-toast"></paper-toast>
+              <paper-button class="sign-in" on-tap="handleLogin" raised>SIGN IN</paper-button>
+              <div class="custom-text">Or</div>
+              <div class="custom-text">By continuing you agree to the terms and conditions</div>
+          </div>
+      </div>
+    </form>
+  </template>
+  <script>
+  (function() {
+    'use strict';
+
+    Polymer({
+      is: 'er-login',
+
+      properties: {
+      },
+
+      ready: function() {
+      },
+
+      handleLogin: function (e) {
+        // if (this.$.loginForm.validate()) {
+            var body = {
+                username: this.username,
+                password: this.password
+            };
+            this.$.loginValidate.body = JSON.stringify(body);
+            this.$.loginValidate.generateRequest();
+        // }
+      },
+
+      handleResponse: function (e) {
+        sessionStorage.auth_token = e.detail.response.access_token;
+        //console.log("sessionStorage.auth_token = "+ sessionStorage.auth_token);
+        location.assign('/');
+      },
+
+      handleError: function (e) {
+        var response = e.detail.request.xhr.response;
+        this.$["paper-toast"].text = response.message;
+        this.$["paper-toast"].show();
+      }
+
+    });
+  })();
+  </script>
+
+</dom-module>

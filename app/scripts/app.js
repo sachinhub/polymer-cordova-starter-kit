@@ -78,4 +78,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     app.$.paperDrawerPanel.closeDrawer();
   };
 
+  var t = document.querySelector('#mainbody');
+
+  // The dom-change event signifies when the template has stamped its DOM.
+  t.addEventListener('dom-change', function () {
+      // auto-binding template is ready.
+      console.log('dom-change for main body');
+      t.loggedin = sessionStorage.auth_token ? true : false;
+
+      if(!t.loggedin){
+          location.assign("login.html");
+      }
+
+  });
 })(document);

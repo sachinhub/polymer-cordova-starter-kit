@@ -1,0 +1,103 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/paper-datatable/paper-datatable.html">
+<link rel="import" href="../../bower_components/paper-chip/paper-chip.html" />
+<link rel="import" href="../../bower_components/iron-icon/iron-icon.html" />
+<script src="../../bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+
+<link rel="import" href="../../bower_components/paper-input-autocomplete-chips/paper-input-autocomplete.html">
+
+<link rel="import" href="../../bower_components/paper-input-autocomplete-chips/paper-input-autocomplete-chips.html">
+<link rel="import" href="../../bower_components/polyloop/polyloop-list.html" />
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html" />
+
+<link rel="import" href="./er-order-item.html" />
+
+<dom-module is="er-orders">
+  <template>
+    <style>
+    :host {
+              display: block;
+          }
+    </style>
+    <h1>Your orders</h1>
+    <!-- <iron-ajax auto url="http://deverp.elasticrun.in/api/method/login"
+               params='{"usr":"sachin.mane@elastic.run", "pwd": "ntex@123"}'
+               method="post",
+               content-type="application/x-www-form-urlencoded"
+               on-response="getOrders"
+               >
+    </iron-ajax> -->
+
+    <iron-ajax id="getOrdersUrl"
+               auto
+               url="http://localhost:3000/DistributionServices/api/SalesOrders?filter=%7B%22fields%22%3A%5B%22name%22%2C%20%22total%22%5D%7D"
+               method="get"
+               accept="application/json"
+               handle-as="json"
+               last-response="{{orders}}"
+               with-credentials=true
+               headers={'Cookie': 'sid'}>
+    </iron-ajax>
+
+    <paper-dialog id="modal" modal class="position">
+        <!--            <polyloop-list-item model-definition-end-point="{{modelDefinitionEndPoint}}" model-name="{{modelSchema.plural}}" id="{{currentId}}"></polyloop-list-item>-->
+        <div class="buttons" id="buttonDiv">
+            <paper-button dialog-confirm autofocus>close</paper-button>
+        </div>
+    </paper-dialog>
+
+    <paper-datatable data={{orders.data}} on-row-tap="_showDetails">
+      <paper-datatable-column header="Name" property="name">
+        <template>
+          <span>{{item.name}}</span>
+        </template>
+      </paper-datatable-column>
+      <paper-datatable-column header="Total" property="total">
+        <template>
+          <span>{{item.total}}</span>
+        </template>
+      </paper-datatable-column>
+    </paper-data-table>
+
+    <!-- <polyloop-list model-definition-end-point="http://localhost:3000/DistributionServices/api" model-name="SalesOrder" page-size="10"></polyloop-list> -->
+
+  </template>
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'er-orders',
+
+        properties: {
+        },
+
+        ready: function() {
+        },
+
+        getOrders: function() {
+          console.log('getOrders function called.');
+          this.$.getOrdersUrl.generateRequest();
+        },
+
+        _showDetails: function (element, ev) {
+              var data = Polymer.dom(this.$.modal).children.length;
+              if (data != 0) {
+                  for (var i = 0; i < Polymer.dom(this.$.modal).children.length; i++) {
+                      if (Polymer.dom(this.$.modal).children[i].id == "polyItem") {
+                          Polymer.dom(this.$.modal).removeChild(Polymer.dom(this.$.modal).children[i]);
+                          break;
+                      }
+                  }
+              }
+              var dynamicEl = document.createElement("er-order-item");
+              dynamicEl.orderId = element.detail.item.name
+              dynamicEl.id = "polyItem";
+              Polymer.dom(this.$.modal).appendChild(dynamicEl);
+              this.$.modal.open();
+          }
+      });
+    })();
+  </script>
+</dom-module>
